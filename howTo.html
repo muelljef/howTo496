@@ -7,8 +7,10 @@
   <link href="blog.css" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+  <link href="custom.css" rel="stylesheet">
 </head>
-<body>
+<body data-spy="scroll" data-target="#myScrollspy">
+
 <div class="container">
 
   <div class="blog-header">
@@ -16,8 +18,25 @@
     <p class="lead-blog-description"></p>
   </div>
 
+
+  <!--Code for side nav bar and scroll spy source from http://www.tutorialrepublic.com/codelab.php?topic=bootstrap&file=scrollspy-->
+  <div class="row">
+    <div class="col-sm-3" id="myScrollspy">
+      <ul class="nav nav-tabs nav-stacked" data-offset-top="120" data-spy="affix">
+        <li class="active"><a href="#one">Get an Amazon Web Services (Free Tier) account</a></li>
+        <li><a href="#two">Launch an EC2 Instance</a></li>
+        <li><a href="#three">SSH into an AWS instance</a></li>
+        <li><a href="#four">Get and Setup the Laravel Project from Github</a></li>
+        <li><a href="#five">Configure Apache2 to serve from from Laravel public directory</a></li>
+        <li><a href="#six">Website up and running</a></li>
+      </ul>
+    </div>
+
+
+
   <div  class="row">
   <div class="col-sm-8 blog-main">
+    <section id="one">
     <h2>Get an Amazon Web Services (Free Tier) account</h2>
       <p>First navigate to the AWS free tier website. <a href="https://aws.amazon.com/free/">Amazon Free Tier Sign Up Page</a></p>
       <p>Then click to go to the "Sign up for an AWS account" and follow the directions for signing up.</p>
@@ -157,6 +176,8 @@
         your root user account if you need it.
       </p>
       <img src="images/login3.png" class="img-responsive">
+    </section>
+    <section id="two">
     <h2>Launch an EC2 Instance</h2>
       <p>
         Sign into your PowerUser account through your IAM users sign-in link
@@ -307,6 +328,8 @@ service apache2 restart
         into the server through ssh. It may take a few minutes to launch the instance, but I have found it to be very quick most
         of the time.
       </p>
+    </section>
+    <section id="three">
     <h2>SSH into an AWS instance</h2>
       <p>
         Open a terminal in your local linux or mac osx installation. (If you are using windows you will need to use putty
@@ -350,6 +373,8 @@ service apache2 restart
           ssh 54.206.98.157 -i testSiteKey.pem -l ubuntu
         </code>
       </pre>
+      </section>
+    <section id="four">
     <h2>Get and Setup the Laravel Project from Github</h2>
     <p>
       First we will need to download and install 'composer' which is a php package manager similar to pip for python. This
@@ -487,6 +512,8 @@ find /var/www -type f -exec sudo chmod 0664 {} +
     <p>
       Now that we are ready with out project, we can setup the server to serve our website.
     </p>
+    </section>
+    <section id="five">
     <h2>Configure Apache2 to serve from from Laravel public directory</h2>
     <p>
       First we need to edit the apache2.conf file. (Note: these files and directory structures may be different for rpm
@@ -554,6 +581,8 @@ sudo service apache2 restart
       </code>
     </pre>
 
+    </section>
+    <section id="six">
     <h2>Website up and running</h2>
     <p>
       Your website should be up and running and you should be able to navigate to other pages. If you are experiencing
@@ -573,8 +602,13 @@ sudo service apache2 restart
       the steps after logging into the server will be applicable for ubuntu servers that are managed through other sites
       like Digital Ocean.
     </p>
+    </section>
 </div>
 </div>
 </div>
+
+ </div>
+
+
 </body>
 </html>
