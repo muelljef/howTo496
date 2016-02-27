@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>How To Setup an Existing Laravel Project on AWS ec2 (cloud webserver)</title>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <link href="blog.css" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container">
+
+  <div class="blog-header">
+    <h1 class="blog header">How to Setup an Existing Laravel Project on AWS EC2 (cloud webserver)</h1>
+    <p class="lead-blog-description"></p>
+  </div>
+
+  <div  class="row">
+  <div class="col-sm-8 blog-main">
+    <h2>Get an Amazon Web Services (Free Tier) account</h2>
+    <ul>
+      <li>First navigate to the AWS free tier website. <a href="https://aws.amazon.com/free/">Amazon Free Tier Sign Up Page</a></li>
+      <li>Then click to go to the "Sign up for an AWS account" and follow the directions for signing up.</li>
+      <li>Once you have an account log in to your account.</li>
+      <li>
+        There are five steps to follow to better secure your account. Navigate to the Identity Access Management module
+        to setup your security. When you first sign in Amazon will indicate that these steps are not done with red X's rather
+        than the green check marks I have.
+      </li>
+      <ol>
+        <li>
+          Delete Your root access keys. This is not as scary as it sounds. This step simply deletes the root access keys
+          to the AWS command line tools through the root account. You really DON'T need root access through the command
+          line tools for this tutorial, and Amazon doesn't believe you need it in general at all. So delete the keys for
+          now. If you ever really do need them you can re-issue them. It is important to note at this point you are logged
+          in through the web console as the root user. You can access all services including the billing statements. In
+          another step we will setup a user so you don't have to login as the root user all the time. So in deleting the
+          root access keys you haven't deleted the root user access overall, just the command line access.
+        </li>
+        <li>
+          Activate MFA on your root account. Click on the link in the drop down and follow the steps to setup your
+          Multifactor authentication of your root account. It is important to do this because there are bitcoin miners out
+          there looking to get access to your account. This is an extra security measure to help. You can have them simply
+          send you a code through a text message or use something like the Google Authenticator App.
+        </li>
+        <li>
+          Create individual IAM users. Here we want to create a Power User through IAM so that you have a user with the
+          privileges you need to launch an EC2 instance, but not having to do this through the root account access. The
+          idea is, the less you access the root account, the less you expose it to the world. If a hacker gets hold of
+          your power user account you can kill it with your root account. If they get hold of your root account you will
+          need to contact Amazon to stop the bleeding.
+        </li>
+        <ul>
+          <li>
+            Click on the Manage Users button.
+          </li>
+          <li>
+            Click on the Create New Users button on the User Management page. (You can see I have a user already created)
+          </li>
+          <li>
+            Then add the user name you wish to use and click create in the bottom right corner. If you will have multiple
+            users you can add extra users on the extra lines provided.
+          </li>
+          <li>
+            After creating the user you will be taken to a page where the users 'key' credentials have been created. You
+            will need to download these security credentials now. These are the private encryption keys the user will need
+            in order to use any AWS command line tools.
+
+            Save these somewhere. We will not need these for the tutorial, but you may want them for future use.
+
+            If you lose the key or believe it is compromised you can inactivate the key and create a new one.
+          </li>
+        </ul>
+        <li>
+          Use groups to assign permissions. Here is where you define a group and the access permissions. So we will make a
+          developers group with Power User access. This will allow the user that we create (and will use) to launch
+          an EC2 instance which we will use as our webserver.
+        </li>
+          <ul>
+            <li>
+              Click on the Manage Groups button
+            </li>
+            <li>
+              Click on the Create New Group button in the upper left hand corner
+            </li>
+            <li>
+              Give the group a name such as "Developers"
+            </li>
+            <li>
+              Select a policy type for the group. You can attach multiple policies if you'd like and if you create
+              custom policies beforehand you can assign those policies to the group. This essentially sets the services
+              the user can access such as EC2, S3 or any other Amazon service you see in the main dashboard.
+            </li>
+            <li>
+              We will search for and set the group to have PowerUser access which is a standard AWS (Notice I have entered
+              'PowerUser' in the search box to filter the results). Select the PowerUserAccess and click on the Next Step
+              button in the bottom right corner
+            </li>
+            <li>
+              Then on the Review Page click on the Create Group Button
+            </li>
+            <li>
+              You will be taken back to the groups page and there you will see your new group. In my case it's called developers.
+              Click on the group now so we can add our user
+            </li>
+            <li>
+              On the developers group page select the Add Users to Group button to add your user to this group.
+            </li>
+            <li>
+              The page will show you a list of your users that you can make selections to add to the group. In this case
+              I have only 1 (as I deleted my previous S3User). Once you have selected your user, click on the Add Users
+              button in the bottom right hand corner.
+            </li>
+          </ul>
+        <li>
+          Apply an IAM password policy. This is a good idea to set. It's very straightforward. Click on the link in the
+          dropdown and set a policy that you wish to enforce. This can require that user passwords are minimum 8 characters,
+          have at least one non-alphanumeric character, passwords last only X amount of months, can't re-use old passwords,
+          and other options that are all very easy to set. If you are going to have more that just yourself access the
+          account this is an import policy to set.
+        </li>
+        <li>
+          Extra Step: Customize the sign in link
+        </li>
+          <ul>
+            <li>
+              From the IAM Dashboard page (with all Amazon's 5 steps to secure your account) Select the 'Customize' link to
+              right of the "IAM users sign-in link"
+            </li>
+            <li>
+              Then on the popup window set the Account Alias. Here we have set 'howtoawslaravel'. Warning the account alias
+              can only contain digits, lowercase letters, and hyphen. Then click create.
+            </li>
+            <li>
+              You will see the new link that the user you created can now sign in through. Note the root user must sign
+              in through a different page. If you navigate to this page AWS provides a link to click on to sign in with
+              your root user account if you need it.
+            </li>
+          </ul>
+      </ol>
+    </ul>
+    <h2>Launch an EC2 Instance</h2>
+    <ul>
+      <li>
+        Sign into your PowerUser account through your IAM users sign-in link
+      </li>
+      <li>
+        When you sign up to Amazon you will by default be put into their US Northwest availability zone, which is natural
+        as Amazon has its headquarters in Seattle. Amazon has availability zones around the world and if you want your
+        application to be served by somewhere closer to you, you should switch availability zones in the upper right
+        hand corner and launch your EC2 instance from that zone and the EC2 instance is tied to a specific availability
+        zone.
+      </li>
+      <li>
+        Now that we have our preferred availability zone set we are ready to launch the EC2 instance. Navigate to the
+        EC2 Dashboard from the main dashboard.
+      </li>
+      <li>
+        Click on the blue 'Launch Instance' button in the middle of the page.
+      </li>
+      <li>
+        Select the Ubuntu Server 14.04 LTS in the middle of the page
+      </li>
+      <li>
+        Select the t2.micro (free tier eligible) Instance. This determines the CPUs and RAM your instance will have. If you
+        have larger computing requirements you will have to choose an more powerful instance, but you will also have to pay
+        for it (see the Amazon documentation for pricing details). Click 'Next: Configure Instance Details'
+      </li>
+      <li>
+        On the configure Instance Details Page there are a number of options to set. We will use all of the standard
+        options. I will explain each option as best I can.
+        <ul>
+          <li>
+            The number of instances is straight forward. Here we only want 1. Increasing this, will increase the number
+            of EC2 instances you launch. Free tier usage only allows for 1 instance
+            running for about a month. So if you launched 2 at the start of the month and had them running for the full month
+            they you would have to essentially pay for the 2nd one. (Free tier usages allows for 750 hours of EC2 instance
+            usage).
+          </li>
+          <li>
+            Purchasing option: Request Spot instances. This is done generally to lower the bill. This may be used where you
+            are process large amounts of data that can be broken up into different processing parts and are not urgent.
+            Essentially you can run an instance at lower cost when their is lower activity on Amazon. I think this has
+            applications with non urgent big data calculations. Maybe DNA sequencing would be done using this.
+          </li>
+          <li>
+            Network. On newer Amazon accounts, Amazon has something called a VPC (Virtual Private Cloud). This is just a logically
+            isolated section of Amazon Web Services. This helps to keep your servers (ec2 instances) separate from other
+            account servers (that exist on the same hardware) and if you need it you can setup multiple VPC's and
+            separate sets of servers that may be running different applications. We will use the default VPC setup by
+            Amazon for now as the VPC setup and configuration is another topic.
+          </li>
+          <li>
+            Subnet. The subnet setting allows you to set your subnet to any of the specific Amazon subnets for the
+            availability zone that you are in or if you leave it as no preference Amazon will randomly and automatically
+            assign your instance to one of its subnets. Here it is easy enough just to leave the setting as default.
+          </li>
+          <li>
+            Auto-assign Public IP. We will choose 'Use subnet setting (Enable)' for this choice. Essentially your instance
+            will be assigned an IP address automatically from Amazon's pool of public IP addresses. If you disable this
+            you will need to go through the steps in the Elastic IP address section to set up your instance's public IP
+            address if you need one.
+          </li>
+          <li>
+            IAM role. We will leave this as none. Roles are used as a way to manage security and access between different
+            Amazon resources. You may want your EC2 instance to access an S3 bucket or a database set up with Amazon RDS
+            (Relational Database Service). You can set roles so they have access to use S3 or RDS. This allows you to manage
+            the access through roles rather then setting up public private key pairs for encryption between instances.
+          </li>
+          <li>
+            Shutdown behavior. Here I will select stop as the shutdown behavior. As I am using on instance for my program
+            on the free tier I may want to start and stop the instance to prevent from going over my free tier usage. If you
+            are setting up a system that automatically spins up an instance if one goes down you will likely want the
+            shutdown behavior to be set as terminate. When the instance is shutdown it is then termintated and all data
+            on the instance is lost. With these systems you will need to us EBS (storage) or S3 buckets to store database
+            information or other resources.
+          </li>
+          <li>
+            I will leave the Protect against accidental termination off. Essentially this requires an extra step to terminate
+            your EC2 instance. If you turn it on and at some point want to terminate your instance you have to disable
+            the feature before being able to terminate the instance. This may be more useful when there are multiple users
+            and some are using command line features where they might send terminate commands to multiple instances (which
+            may accidentally catch yours if the features is not on).
+          </li>
+          <li>
+            The last two options will incur extra charges if you change the settings so I suggest leaving them as is for
+            the tutorial (and use them only if you need them for your application). Changing the tenancy to Dedicated can
+            increase the cost significantly.
+          </li>
+          <li>
+            The one thing we do want to change or inspect on this page is the "Advanced Details" section which we will need
+            to click on the dropdown to view. Here we can enter a bash script that will be run as the root user at startup.
+            Since it is the root user we will make sure we don't use 'sudo' when running the script. The following is the
+            snippet that I will add to my instance before launching just to install a few packages that we need such as git,
+            php5, and apache2. I've added this as text, but you can add it as a file to be run.
+          </li>
+          <li>
+            The next step is to add or adjust your storage. Again here as I don't need a database for the application I am
+            pulling I will not set up any extra storage. If you need persistent storage this would bea good point to add the
+            storage. When an instance is terminated the volume associated with root will be terminated as well, but any
+            additional volumes that have been added will remain and can be managed through Elastic Block Store (in the
+            EC2 dashboard). The click on Next: Tag Instance
+          </li>
+          <li>
+            Tag Instance. Here is a good place to give the instance some tags so that you know what you have set it up for
+            in case you end up generating many instances. Click on Next: Configure Security Group
+          </li>
+          <li>
+            Configure Security Group. This is an important step. Here we set how your instance is being accessed. Since
+            we want this to act like a web server we will add HTTP and HTTPS so that the web pages can be accessed and SSH
+            so that we can login to the server and do some configuration. Since the SSH comes up by default lets configure
+            that setting to me more secure by selecting the source dropdown on the far right and choosing My Ip. Amazon will
+            put your current Ip into the source table. (Note if you have a dynamic IP address you may have to change this
+            through the Amazon Console later if your IP changes, but this is a better option than leaving the SSH access open
+            to the world for access. Allowing access to 0.0.0.0/0 would allow anyone to attempt to login and could leave
+            your instance open to a brute force attack.) Then we will want to add two more rules setting the first to HTTP
+            and the second to HTTPS. The standard settings will suffice. Then click on Review and Launch
+          </li>
+          <li>
+            Review and Launch. Here look over your instance details and make sure you are happy with your choices. Then
+            launch the instance. It may take a few minutes to launch the instance. I have found it to be very quick most
+            of the time. IMPORTANT. Make sure to create and download the private key file. We will need this file to log
+            into the server through ssh.
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <h2>SSH into an AWS instance</h2>
+    <ul>
+      <li>
+
+      </li>
+    </ul>
+    <h2>Get and Setup the Laravel Project from Github</h2>
+    <p></p>
+    <h2>Configure Apache2 to serve from from Laravel public directory</h2>
+    <p></p>
+    <h2>Future steps libraries to consider</h2>
+    <p>
+      - fully automate pulling the project and config with bash scripts (need a non public solution for the .env file)
+      - CodeDeploy
+      - Elastic Beanstalk
+      - Laravel Forge
+    </p>
+
+  </div>
+  </div>
+</div>
+</body>
+</html>
